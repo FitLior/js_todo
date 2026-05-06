@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="styles.css">
+  <title>Todo App</title>
+  
+</head>
+<body>
+
+<header>
+  <h1>TODO</h1>
+  <p>Saved locally on your device</p>
+</header>
+
+<div class="input-area">
+  <div class="input-row">
+    <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" />
+    <button id="addBtn" aria-label="Add todo">+</button>
+  </div>
+  <div class="filters">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="active">Active</button>
+    <button data-filter="completed">Completed</button>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <span id="countLabel">0 tasks</span>
+  <button class="clear-btn" id="clearBtn">Clear completed</button>
+</div>
+
+<div class="list" id="todoListThisWeek"></div>
+
+<script>
+  const input = document.getElementById('todoInput');
+  const addBtn = document.getElementById('addBtn');
+  const listThisWeekEl = document.getElementById('todoListThisWeek');
+  const countLabel = document.getElementById('countLabel');
+  const clearBtn = document.getElementById('clearBtn');
+  const filterBtns = document.querySelectorAll('.filters button');
+
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  let filter = 'all';
+
+  function save() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  function addTodo() {
+    const text = input.value.trim();
+    if (!text) return;
+    todos.unshift({ id: Date.now(), text, done: false });
+    input.value = '';
+    save();
+    renderThisWeek();
+  }
+
+  function toggleTodo(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) t.done = !t.done;
+    save();
+    renderThisWeek();
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    renderThisWeek();
+  }
+
+  function clearCompleted() {
+    todos = todos.filter(t => !t.done);
+    save();
+    renderThisWeek();
+  }
+
+  function renderThisWeek() {
+    console.log(JSON.stringify(todos, null, 2));
+    const filtered = todos.filter(t => {
+      if (filter === 'active') return !t.done;
+      if (filter === 'completed') return t.done;
+      return true;
+    });
+
+    const active = todos.filter(t => !t.done).length;
+    countLabel.textContent = `${active} task${active !== 1 ? 's' : ''} left`;
+
+    listThisWeekEl.innerHTML = filtered.length === 0
+      ? `<p class="empty">${filter === 'completed' ? 'No completed tasks' : filter === 'active' ? 'Nothing to do!' : 'Add your first task'}</p>`
+      : filtered.map(t => `
+          <div class="todo-item ${t.done ? 'done' : ''}">
+            <button class="check-btn" onclick="toggleTodo(${t.id})" aria-label="Toggle">✓</button>
+            <span class="todo-text">${escapeHtml(t.text)}</span>
+            <button class="del-btn" onclick="deleteTodo(${t.id})" aria-label="Delete">✕</button>
+          </div>
+        `).join('');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  addBtn.addEventListener('click', addTodo);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  clearBtn.addEventListener('click', clearCompleted);
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderThisWeek();
+    });
+  });
+
+  renderThisWeek();
+
+  // Register service worker for offline use
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'todo-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+</script>
+</body>
+</html>

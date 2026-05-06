@@ -1,0 +1,40 @@
+- `*, *::before, *::after`
+- `:root`
+- `body`
+- `header`
+- `header h1`
+- `header p`
+- `.input-area`
+- `.input-row`
+- `.input-row input`
+- `.input-row input::placeholder`
+- `.input-row input:focus`
+- `.input-row button`
+- `.input-row button:active`
+- `.filters`
+- `.filters button`
+- `.filters button.active`
+- `.list`
+- `.empty`
+- `.todo-item`
+- `@keyframes slideIn`
+- `.todo-item.done`
+- `.todo-item.done .todo-text`
+- `.check-btn`
+- `.todo-item.done .check-btn`
+- `.todo-text`
+- `.del-btn`
+- `.del-btn:active`
+- `.footer-bar`
+- `.clear-btn`
+- `.clear-btn:active`
+- `.date-row`
+- `.date-row input[type="date"]`
+- `.date-row input[type="date"]:focus`
+- `.todo-date`
+- `.todo-item.done .todo-date`
+- `.todo-date:hover`
+- `.no-date-btn`
+- `.no-date-btn:active`
+- `.inline-date-input`
+- `.todo-body`

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="styles.css">
+  <title>Todo App</title>
+</head>
+<body>
+
+<header>
+  <h1>TODO</h1>
+  <p>Saved locally on your device</p>
+</header>
+
+<div class="input-area">
+  <div class="input-row">
+    <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" />
+    <button id="addBtn" aria-label="Add todo">+</button>
+  </div>
+  <div class="date-row">
+    <span>Start date</span>
+    <input type="date" id="startDateInput" />
+  </div>
+  <div class="date-row">
+    <span>End date</span>
+    <input type="date" id="endDateInput" />
+  </div>
+  <div class="filters">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="active">Active</button>
+    <button data-filter="completed">Completed</button>
+    <button data-filter="week">This Week</button>
+    <button data-filter="nextweek">Next Week</button>
+    <button data-filter="month">This Month</button>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <span id="countLabel">0 tasks</span>
+  <button class="clear-btn" id="clearBtn">Clear completed</button>
+</div>
+
+<div class="list" id="todoList"></div>
+
+<script>
+  // Select all control elements to global variables
+  // input#todoInput
+  const input = document.getElementById('todoInput');
+  // input#startDateInput
+  const startDateInput = document.getElementById('startDateInput');
+    // input#endDateInput
+  const endDateInput = document.getElementById('endDateInput');
+  // button#addBtn
+  const addBtn = document.getElementById('addBtn');
+  // div#todoList.list
+  const listEl = document.getElementById('todoList');
+  // span#countLabel
+  const countLabel = document.getElementById('countLabel');
+  // button#clearBtn.clear-btn
+  const clearBtn = document.getElementById('clearBtn');
+  // div.filters select all buttons in .filters class
+  const filterBtns = document.querySelectorAll('.filters button');
+
+  // parse todos file in local storage into todos array of objects 
+  //  if null parse empty array
+  // global todos array
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  // global variable filter
+  let filter = 'all';
+
+  function save() {
+    //save todos array of object in a nice JSON file into todos in local storage
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  function addTodo() {
+    // value.trim() of a text control element
+    const text = input.value.trim();
+    // if empty return nothing
+    if (!text) return;
+    // take the startDateInput value or null if startDateInput is null and into date local in-function variable
+    const startDate = startDateInput.value || null;
+        // take the startDateInput value or null if startDateInput is null and into date local in-function variable
+    const endDate = endDateInput.value || null;
+    // push the todo inside the todo array in the beginning of the array, use Date.now() which is long number and unique fit for id
+    todos.unshift({ id: Date.now(), text, startDate, endDate, done: false });
+    // Clear the input control element
+    input.value = '';
+    // Clear the date control element date value
+    startDateInput.value = '';
+    endDateInput.value = '';
+    save();
+    render();
+  }
+
+  function toggleTodo(id) {
+    // find - array search by property of an object
+    // gets id of todo, find it and invert it's value true -> false, false -> true
+    const t = todos.find(t => t.id === id);
+    if (t) t.done = !t.done;
+    save();
+    render();
+  }
+
+  function deleteTodo(id) {
+    // array.filter - keeps what is true in array
+    // keep all items that don't match this id (the deleted one)
+    // irreversable action
+    todos = todos.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearCompleted() {
+    // array.filter - keeps what is true in array
+    // keep only "not done" tasks
+    // irreversable action 
+    todos = todos.filter(t => !t.done);
+    save();
+    render();
+  }
+ /*
+  function isThisWeek(dateStr) {
+    // if dateStr is null do nothing
+    if (!dateStr) return false;
+    // Date constuctor - no parameters means today's date and time
+    const today = new Date();
+    // setHours(hoursValue, minutesValue, secondsValue, msValue)
+    // set hours all 0
+    today.setHours(0, 0, 0, 0);
+    // getDay gets the distance to sunday (days since Sunday)  0=Sun 1=mon 2=tue ...
+    const day = today.getDay();
+    
+    // diffToSun gets days since Sunday 
+    const diffToSun = day;
+    // Date constuctor - the date of today
+    const weekStart = new Date(today);
+    // weekStart will contain the week start date by substracting diffToSun to todays date
+    weekStart.setDate(today.getDate() - diffToSun);
+    // Date constructor - the date of weekStart
+    const weekEnd = new Date(weekStart);
+    // weekEnd will contain the week end date by adding 6 to weekStart
+    weekEnd.setDate(weekStart.getDate() + 6);
+    // variable d will have the date of dataStr parameter to the function
+    const d = new Date(dateStr + 'T00:00:00');
+    // return true if it is between weekStart and weekEnd
+    return d >= weekStart && d <= weekEnd;
+  }
+*/
+function isThisMonth(startDateStr, endDateStr) {
+  // if startDateStr is null do nothing
+  if (!startDateStr) return false;
+
+  // Date constructor - no parameters means today's date and time
+  const today = new Date();
+
+  // monthStart is the first day of the current month
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  // monthEnd is the last day of the current month
+  // day 0 of next month = last day of current month
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  // variable start will have the date of startDateStr parameter to the function
+  const start = new Date(startDateStr + 'T00:00:00');
+  // if no endDateStr, treat the task as a single day (end = start)
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+
+  // return true if the range [start, end] overlaps with [monthStart, monthEnd]
+  // overlap condition: start is before or on monthEnd AND end is on or after monthStart
+  return start <= monthEnd && end >= monthStart;
+}
+
+function isNextWeek(startDateStr, endDateStr) {
+  // if startDateStr is null do nothing
+  if (!startDateStr) return false;
+
+  // Date constructor - no parameters means today's date and time
+  const today = new Date();
+  // set hours all 0
+  today.setHours(0, 0, 0, 0);
+
+  // getDay gets the distance to sunday (days since Sunday) 0=Sun 1=mon 2=tue ...
+  const day = today.getDay();
+
+  // diffToSun gets days since Sunday
+  const diffToSun = day;
+  // Date constructor - the date of today
+  const thisWeekStart = new Date(today);
+  // thisWeekStart will contain this week's start date by subtracting diffToSun from today's date
+  thisWeekStart.setDate(today.getDate() - diffToSun);
+
+  // nextWeekStart is 7 days after thisWeekStart
+  const nextWeekStart = new Date(thisWeekStart);
+  nextWeekStart.setDate(thisWeekStart.getDate() + 7);
+  // nextWeekEnd is 6 days after nextWeekStart
+  const nextWeekEnd = new Date(nextWeekStart);
+  nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+
+  // variable start will have the date of startDateStr parameter to the function
+  const start = new Date(startDateStr + 'T00:00:00');
+  // if no endDateStr, treat the task as a single day (end = start)
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+
+  // return true if the range [start, end] overlaps with [nextWeekStart, nextWeekEnd]
+  // overlap condition: start is before or on nextWeekEnd AND end is on or after nextWeekStart
+  return start <= nextWeekEnd && end >= nextWeekStart;
+}
+
+function isThisWeek(startDateStr, endDateStr) {
+  // if startDateStr is null do nothing
+  if (!startDateStr) return false;
+
+  // Date constructor - no parameters means today's date and time
+  const today = new Date();
+  // set hours all 0
+  today.setHours(0, 0, 0, 0);
+
+  // getDay gets the distance to sunday (days since Sunday) 0=Sun 1=mon 2=tue ...
+  const day = today.getDay();
+
+  // diffToSun gets days since Sunday
+  const diffToSun = day;
+  // Date constructor - the date of today
+  const weekStart = new Date(today);
+  // weekStart will contain the week start date by subtracting diffToSun to today's date
+  weekStart.setDate(today.getDate() - diffToSun);
+  // Date constructor - the date of weekStart
+  const weekEnd = new Date(weekStart);
+  // weekEnd will contain the week end date by adding 6 to weekStart
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  // variable start will have the date of startDateStr parameter to the function
+  const start = new Date(startDateStr + 'T00:00:00');
+  // if no endDateStr, treat the task as a single day (end = start)
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+
+  // return true if the range [start, end] overlaps with [weekStart, weekEnd]
+  // overlap condition: start is before or on weekEnd AND end is on or after weekStart
+  return start <= weekEnd && end >= weekStart;
+}
+
+  function render() {
+    // new array filtered will contain tasks filtered using filter variable
+    const filtered = todos.filter(t => {
+      if (filter === 'active') return !t.done;
+      if (filter === 'completed') return t.done;
+      if (filter === 'week') return isThisWeek(t.startDate, t.endDate);
+      if (filter === 'nextweek') return isNextWeek(t.startDate, t.endDate);
+      if (filter === 'month') return isThisMonth(t.startDate, t.endDate);
+      return true;
+    });
+    // new variable active will contain the length of the todo array
+    // countLable control element will hold text - x tasks left and if x=1 it will be 1 task left
+    const active = todos.filter(t => !t.done).length;
+    countLabel.textContent = `${active} task${active !== 1 ? 's' : ''} left`;
+
+    // HTML element called #todoList.list text is as following: if no todo write empty message if not
+    // Take filtered array and on each element use todoHTML on it and then join into a single string 
+    listEl.innerHTML = filtered.length === 0
+      ? emptyMessage()
+      : filtered.map(todoHTML).join('');
+  }
+
+  function emptyMessage() {
+    // create an object named messages with properties of filter variable values
+    // looks for the value inside filter global variable
+    // return a HTML paragraph class 'empty' with the relevant text.
+    const messages = {
+      completed: 'No completed tasks',
+      active: 'Nothing to do!',
+      week: 'No tasks this week'
+    };
+    return `<p class="empty">${messages[filter] || 'Add your first task'}</p>`;
+  }
+
+  function todoHTML(t) {
+  // add HTML div in class "todo-item done" or "todo-item" if not done
+      // add button in class check-btn fire "toggleTodo" function with task id as a param
+      // add div of class "todo-body"
+          // add span element in class "todo-text" and fix it's text for special chars
+          // if t.startDate not null - add span with calendar emoji with class "todo-date" fire startEditStartDate with task id as param
+          // if t.startDate null - add button with text "+ add start date" with class "no-date-btn" fire startEditStartDate(task id)
+          // add date input element hidden with text t.startDate or '' with special id "start-date-edit-[task id]" changing it fire updateStartDate(task_id and this as input element value)
+          // clicking outside the element fire cancelEditDate(task_id)
+      // add button with "X" text with class "del-btn" firing "deleteTodo(task id)" 
+    return `
+      <div class="todo-item ${t.done ? 'done' : ''}">
+        <button class="check-btn" onclick="toggleTodo(${t.id})" aria-label="Toggle">✓</button>
+        <div class="todo-body">
+          <span class="todo-text">${escapeHtml(t.text)}</span>
+          
+          ${t.startDate
+            ? `<span class="todo-date" onclick="startEditStartDate(${t.id})">Start Date: 📅 ${formatDate(t.startDate)} 
+               <button class="clear-date-btn" onclick="clearStartDate(${t.id})">X</button></span> `
+            : `<button class="no-date-btn" onclick="startEditStartDate(${t.id})">+ add start date</button>`
+          }
+          
+          <input class="inline-date-input" id="start-date-edit-${t.id}" type="date"
+            style="display:none" value="${t.date || ''}"
+            onchange="updateStartDate(${t.id}, this.value)"
+            onblur="cancelEditStartDate(${t.id})" />
+
+          ${t.endDate
+            ? `<span class="todo-date" onclick="startEditEndDate(${t.id})">Due Date: 📅 ${formatDate(t.endDate)} 
+               <button class="clear-date-btn" onclick="clearEndDate(${t.id})">X</button></span> `
+               
+            
+            : `<button class="no-date-btn" onclick="startEditEndDate(${t.id})">+ add end date</button>`
+          }
+
+            <input class="inline-date-input" id="end-date-edit-${t.id}" type="date"
+            style="display:none" value="${t.date || ''}"
+            onchange="updateEndDate(${t.id}, this.value)"
+            onblur="cancelEditEndDate(${t.id})" />
+
+        </div>
+        <button class="del-btn" onclick="deleteTodo(${t.id})" aria-label="Delete">✕</button>
+      </div>
+    `;
+  }
+
+  function startEditStartDate(id) {
+    // select startDate input element after clicking startDate span 📅 [startDate] or clicking the + add start Date button .no-start-date-btn
+    // display the startdate input element and focus if el not null if el null do nothing 
+    const el = document.getElementById('start-date-edit-' + id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.focus();
+  }
+
+  function startEditEndDate(id) {
+    // select startDate input element after clicking startDate span 📅 [startDate] or clicking the + add start Date button .no-start-date-btn
+    // display the startdate input element and focus if el not null if el null do nothing 
+    const el = document.getElementById('end-date-edit-' + id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.focus();
+  }
+
+  function cancelEditStartDate(id) {
+    // when clicking outside the startDate element in todoHTML(t)
+    // un-display the startDate input element
+    const el = document.getElementById('start-date-edit-' + id);
+    if (el) el.style.display = 'none';
+  }
+
+  function cancelEditEndDate(id) {
+    // when clicking outside the startDate element in todoHTML(t)
+    // un-display the startDate input element
+    const el = document.getElementById('end-date-edit-' + id);
+    if (el) el.style.display = 'none';
+  }
+
+  function updateStartDate(id, value) {
+    // triggered by onchange event in clicking and changing startDate in the startDate input element
+    const t = todos.find(t => t.id === id);
+    if (t) t.startDate = value || null;
+    save();
+    render();
+  }
+
+  function clearStartDate(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) t.startDate = null;
+    save();
+    render();
+  }
+
+  function clearEndDate(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) t.endDate = null;
+    save();
+    render();
+  }
+
+  function updateEndDate(id, value) {
+    // triggered by onchange event in clicking and changing startDate in the startDate input element
+    const t = todos.find(t => t.id === id);
+    if (t) t.endDate = value || null;
+    save();
+    render();
+  }
+
+  function formatDate(dateStr) {
+    // Take date string and return it in format d/m/y
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function escapeHtml(str) {
+    // omit special chars that could be displayed wrong in HTML text & < > ""
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // add event listener on addBtn run addTodo on click
+  addBtn.addEventListener('click', addTodo);
+  // add event listener on input box run addTodo on enter key
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  // add event listener on clearBtn run clearCompleted on click
+  clearBtn.addEventListener('click', clearCompleted);
+
+  // create for each filter button event listener on click
+  // if clicked change filter global variable to the button's data-[variable name] in HTML
+  // remove class "active" from all buttons
+  // on the current button that was clicked add class 'active'
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  render();
+
+  // Register service worker for offline use
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'todo-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+</script>
+</body>
+</html>

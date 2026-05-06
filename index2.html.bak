@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Todo App</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --border: #2a2a45;
+      --accent: #e8ff47;
+      --accent-dim: rgba(232,255,71,0.12);
+      --text: #f0f0f0;
+      --muted: #6b6b8a;
+      --done: #3a3a55;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 20px 24px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    header p {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .input-area {
+      width: 100%;
+      max-width: 600px;
+      padding: 20px 16px 12px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-row input {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input::placeholder { color: var(--muted); }
+    .input-row input:focus { border-color: var(--accent); }
+
+    .input-row button {
+      background: var(--accent);
+      color: #0f0f1a;
+      border: none;
+      border-radius: 10px;
+      padding: 0 20px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      line-height: 1;
+    }
+
+    .input-row button:active { opacity: 0.8; transform: scale(0.96); }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .filters button {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.05em;
+    }
+
+    .filters button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .list {
+      width: 100%;
+      max-width: 600px;
+      padding: 4px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 48px 0;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px;
+      transition: border-color 0.2s, opacity 0.2s;
+      animation: slideIn 0.18s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .todo-item.done {
+      opacity: 0.5;
+      border-color: var(--done);
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .check-btn {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      color: transparent;
+    }
+
+    .todo-item.done .check-btn {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0f0f1a;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.92rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+
+    .del-btn:active { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+
+    .footer-bar {
+      width: 100%;
+      max-width: 600px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    .clear-btn:active { color: #ff6b6b; }
+
+    .date-row {
+      margin-top: 8px;
+    }
+
+    .date-row input[type="date"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.88rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+
+    .date-row input[type="date"]:focus { border-color: var(--accent); }
+
+    .todo-date {
+      font-size: 0.68rem;
+      color: var(--accent);
+      margin-top: 3px;
+      letter-spacing: 0.04em;
+    }
+
+    .todo-item.done .todo-date { color: var(--muted); }
+
+    .todo-date {
+      font-size: 0.68rem;
+      color: var(--accent);
+      margin-top: 3px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .todo-date:hover { opacity: 0.8; }
+
+    .no-date-btn {
+      background: none;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 0;
+      margin-top: 3px;
+      letter-spacing: 0.04em;
+      text-decoration: underline dashed;
+      text-underline-offset: 2px;
+    }
+
+    .no-date-btn:active { color: var(--accent); }
+
+    .inline-date-input {
+      background: var(--bg);
+      border: 1.5px solid var(--accent);
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      outline: none;
+      margin-top: 4px;
+      color-scheme: dark;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>TODO</h1>
+  <p>Saved locally on your device</p>
+</header>
+
+<div class="input-area">
+  <div class="input-row">
+    <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" />
+    <button id="addBtn" aria-label="Add todo">+</button>
+  </div>
+  <div class="date-row">
+    <input type="date" id="dateInput" />
+  </div>
+  <div class="filters">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="active">Active</button>
+    <button data-filter="completed">Completed</button>
+    <button data-filter="week">This Week</button>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <span id="countLabel">0 tasks</span>
+  <button class="clear-btn" id="clearBtn">Clear completed</button>
+</div>
+
+<div class="list" id="todoList"></div>
+
+<script>
+  // Select all control elements
+  const input = document.getElementById('todoInput');
+  const dateInput = document.getElementById('dateInput');
+  const addBtn = document.getElementById('addBtn');
+  const listEl = document.getElementById('todoList');
+  const countLabel = document.getElementById('countLabel');
+  const clearBtn = document.getElementById('clearBtn');
+  const filterBtns = document.querySelectorAll('.filters button');
+
+  // parse todos file in local storage into todos array of objects 
+  //  if null parse empty array
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  let filter = 'all';
+
+  function save() {
+    //save todos array of object in a nice JSON file into todos in local storage
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  function addTodo() {
+    // value.trim() of a text control element
+    // value of date control element
+    // array.unshift()
+    // take the text inside the input box control element put into text local in-function variable
+    // trim any spaces before or after
+    const text = input.value.trim();
+    // if empty return nothing
+    if (!text) return;
+    // take the dateInput value or null if dateInput is null and into date local in-function variable
+    const date = dateInput.value || null;
+    // push the todo inside the todo array in the beginning of the array, use Date.now() which is long number and unique fit for id
+    todos.unshift({ id: Date.now(), text, date, done: false });
+    // Clear the input control element
+    input.value = '';
+    // Clear the date control element date value
+    dateInput.value = '';
+    save();
+    render();
+  }
+
+  function toggleTodo(id) {
+    // find - array search by property of an object
+    // gets id of todo, find it and invert it's value true -> false, false -> true
+    const t = todos.find(t => t.id === id);
+    if (t) t.done = !t.done;
+    save();
+    render();
+  }
+
+  function deleteTodo(id) {
+    // array.filter - keeps what is true in array
+    // keep all items that don't match this id (the deleted one)
+    // irreversable action
+    todos = todos.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearCompleted() {
+    // array.filter - keeps what is true in array
+    // keep only "not done" tasks
+    // irreversable action 
+    todos = todos.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  function isThisWeek(dateStr) {
+    // if dateStr is null do nothing
+    if (!dateStr) return false;
+    // Date constuctor - no parameters means today's date and time
+    const today = new Date();
+    // setHours(hoursValue, minutesValue, secondsValue, msValue)
+    // set hours all 0
+    today.setHours(0, 0, 0, 0);
+    // getDay gets the distance to sunday (days since Sunday)  0=Sun 1=mon 2=tue ...
+    const day = today.getDay();
+    
+    // diffToSun gets days since Sunday 
+    const diffToSun = day;
+    // Date constuctor - the date of today
+    const weekStart = new Date(today);
+    // weekStart will contain the week start date by substracting diffToSun to todays date
+    weekStart.setDate(today.getDate() - diffToSun);
+    // Date constructor - the date of weekStart
+    const weekEnd = new Date(weekStart);
+    // weekEnd will contain the week end date by adding 6 to weekStart
+    weekEnd.setDate(weekStart.getDate() + 6);
+    // variable d will have the date of dataStr parameter to the function
+    const d = new Date(dateStr + 'T00:00:00');
+    // return true if it is between weekStart and weekEnd
+    return d >= weekStart && d <= weekEnd;
+  }
+
+  function render() {
+    // new array filtered will contain tasks filtered using filter variable
+    const filtered = todos.filter(t => {
+      if (filter === 'active') return !t.done;
+      if (filter === 'completed') return t.done;
+      if (filter === 'week') return isThisWeek(t.date);
+      return true;
+    });
+    // new variable active will contain the length of the todo array
+    // countLable control element will hold text - x tasks left and if x=1 it will be 1 task left
+    const active = todos.filter(t => !t.done).length;
+    countLabel.textContent = `${active} task${active !== 1 ? 's' : ''} left`;
+
+    // HTML element called #todoList.list text is as following: if no todo write empty message if not
+    // Take filtered array and on each element use todoHTML on it and then join into a single string 
+    listEl.innerHTML = filtered.length === 0
+      ? emptyMessage()
+      : filtered.map(todoHTML).join('');
+  }
+
+  function emptyMessage() {
+    // create an object named messages with properties of filter variable values
+    // looks for the value inside filter global variable
+    // return a HTML paragraph class 'empty' with the relevant text.
+    const messages = {
+      completed: 'No completed tasks',
+      active: 'Nothing to do!',
+      week: 'No tasks this week'
+    };
+    return `<p class="empty">${messages[filter] || 'Add your first task'}</p>`;
+  }
+
+  function todoHTML(t) {
+  // add HTML div in class "todo-item done" or "todo-item" if not done
+      // add button in class check-btn fire "toggleTodo" function with task id as a param
+      // add div of class "todo-body"
+          // add span element in class "todo-text" and fix it's text for special chars
+          // if t.date not null - add span with calendar emoji with class "todo-date" fire startEditDate with task id as param
+          // if t.date null - add button with text "+ add date" with class "no-date-btn" fire startEditDate(task id)
+          // add date input element hidden with text t.date or '' with special id "date-edit-[task id]" changing it fire updateDate(task_id and this as input element value)
+          // clicking outside the element fire cancelEditDate(task_id)
+      // add button with "X" text with class "del-btn" firing "deleteTodo(task id)" 
+    return `
+      <div class="todo-item ${t.done ? 'done' : ''}">
+        <button class="check-btn" onclick="toggleTodo(${t.id})" aria-label="Toggle">✓</button>
+        <div class="todo-body">
+          <span class="todo-text">${escapeHtml(t.text)}</span>
+          ${t.date
+            ? `<span class="todo-date" onclick="startEditDate(${t.id})">📅 ${formatDate(t.date)}</span>`
+            : `<button class="no-date-btn" onclick="startEditDate(${t.id})">+ add date</button>`
+          }
+          <input class="inline-date-input" id="date-edit-${t.id}" type="date"
+            style="display:none" value="${t.date || ''}"
+            onchange="updateDate(${t.id}, this.value)"
+            onblur="cancelEditDate(${t.id})" />
+        </div>
+        <button class="del-btn" onclick="deleteTodo(${t.id})" aria-label="Delete">✕</button>
+      </div>
+    `;
+  }
+
+  function startEditDate(id) {
+    // select date input element after clicking date span 📅 [date] or clicking the + add date button .no-date-btn
+    // display the date input element and focus if el not null if el null do nothing 
+    const el = document.getElementById('date-edit-' + id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.focus();
+  }
+
+  function cancelEditDate(id) {
+    // when clicking outside the date element in todoHTML(t)
+    // un-display the date input element
+    const el = document.getElementById('date-edit-' + id);
+    if (el) el.style.display = 'none';
+  }
+
+  function updateDate(id, value) {
+    // triggered by onchange event in clicking and changing date in the date input element
+    const t = todos.find(t => t.id === id);
+    if (t) t.date = value || null;
+    save();
+    render();
+  }
+
+  function formatDate(dateStr) {
+    // Take date string and return it in format d/m/y
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function escapeHtml(str) {
+    // omit special chars that could be displayed wrong in HTML text & < > ""
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // add event listener on addBtn run addTodo on click
+  addBtn.addEventListener('click', addTodo);
+  // add event listener on input box run addTodo on enter key
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  // add event listener on clearBtn run clearCompleted on click
+  clearBtn.addEventListener('click', clearCompleted);
+
+  // create for each filter button event listener on click
+  // if clicked change filter global variable to the button's data-[variable name] in HTML
+  // remove class "active" from all buttons
+  // on the current button that was clicked add class 'active'
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  render();
+
+  // Register service worker for offline use
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'todo-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+</script>
+</body>
+</html>
