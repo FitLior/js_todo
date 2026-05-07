@@ -326,15 +326,19 @@ header p {
 
 .lists-container {
   width: 100%;
-  max-width: 600px;
-  padding: 16px 16px 0;
+  max-width: 1400px;
+  /*padding: 16px 16px 0;*/
+  padding: 20px;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-direction: row;
+  gap: 50px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Each list is wrapped in a section with a header and a .list body */
 .list-section {
+  max-width: 400px;
   border: 1.5px solid var(--border);
   border-radius: 12px;
   overflow: hidden;

@@ -1,0 +1,12 @@
+Date filter helpers.md
+function addTodo().md
+function applyFilter(filterValue).md
+function changeListFilter(index, newFilter).md
+function clearCompleted().md
+function createList(filterValue = 'all').md
+function deleteList(index).md
+function deleteTodo(id).md
+function renderAll().md
+function renderList(index).md
+function todoHTML(t).md
+function toggleTodo(id).md
