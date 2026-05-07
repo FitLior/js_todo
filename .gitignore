@@ -10,3 +10,8 @@ function renderAll().md
 function renderList(index).md
 function todoHTML(t).md
 function toggleTodo(id).md
+CSS selectors in order.md
+CSS_Color variables for consistency.md
+CSS_CSS Reset Simple.md
+CSS_Import Fonts.md
+HTML Layout.md
