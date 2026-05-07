@@ -338,7 +338,8 @@ header p {
 
 /* Each list is wrapped in a section with a header and a .list body */
 .list-section {
-  max-width: 400px;
+  flex: 1 1 400px; /* add this — grows to fill space, min 400px */
+  max-width: 600px;
   border: 1.5px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
