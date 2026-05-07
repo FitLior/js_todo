@@ -1,3 +1,437 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --border: #2a2a45;
+  --accent: #e8ff47;
+  --accent-dim: rgba(232,255,71,0.12);
+  --text: #f0f0f0;
+  --muted: #6b6b8a;
+  --done: #3a3a55;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header {
+  width: 100%;
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  padding: 20px 24px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+header p {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.input-area {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px 16px 12px;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.input-row input {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-row input::placeholder { color: var(--muted); }
+.input-row input:focus { border-color: var(--accent); }
+
+.input-row button {
+  background: var(--accent);
+  color: #0f0f1a;
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.input-row button:active { opacity: 0.8; transform: scale(0.96); }
+
+.filters {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.filters button {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+
+.filters button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.list {
+  width: 100%;
+  max-width: 600px;
+  padding: 4px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 48px 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 14px;
+  transition: border-color 0.2s, opacity 0.2s;
+  animation: slideIn 0.18s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.todo-item.done {
+  opacity: 0.5;
+  border-color: var(--done);
+}
+
+.todo-item.done .todo-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.check-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-size: 0.8rem;
+  color: transparent;
+}
+
+.todo-item.done .check-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f0f1a;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.del-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.del-btn:active { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+
+.footer-bar {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.clear-btn:active { color: #ff6b6b; }
+
+.date-row {
+  margin-top: 8px;
+  display: flex;
+}
+.date-row span {
+  width: 30%;
+  padding: 11px 16px;
+}
+.date-row input[type="date"] {
+  width: 70%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  color-scheme: dark;
+}
+
+.date-row input[type="date"]:focus { border-color: var(--accent); }
+
+.todo-date {
+  font-size: 0.68rem;
+  color: var(--accent);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-item.done .todo-date { color: var(--muted); }
+
+.todo-date:hover { opacity: 0.8; }
+
+.no-date-btn {
+  background: none;
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 0;
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+  text-decoration: underline dashed;
+  text-underline-offset: 2px;
+  text-align: left;
+}
+
+.no-date-btn:active { color: var(--accent); }
+
+.inline-date-input {
+  background: var(--bg);
+  border: 1.5px solid var(--accent);
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+  outline: none;
+  margin-top: 4px;
+  color-scheme: dark;
+  width: 100%;
+}
+
+.todo-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.clear-date-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+/* ── Dynamic multi-list styles ──────────────────────────────── */
+
+.lists-container {
+  width: 100%;
+  max-width: 1400px;
+  /*padding: 16px 16px 0;*/
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  gap: 50px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Each list is wrapped in a section with a header and a .list body */
+.list-section {
+  flex: 1 1 400px; /* add this — grows to fill space, min 400px */
+  max-width: 600px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  animation: slideIn 0.18s ease;
+}
+
+.list-section .list {
+  /* override the standalone .list padding — no outer margin needed here */
+  padding: 8px 12px 12px;
+  max-width: 100%;
+}
+
+/* Header bar sitting above each list */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+}
+
+.list-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+/* The filter <select> inside each list header */
+.list-filter-select {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.list-filter-select:focus { border-color: var(--accent); }
+
+/* The dropdown options inherit the dark surface */
+.list-filter-select option { background: var(--surface); }
+
+/* Remove button in each list header */
+.delete-list-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  padding: 2px 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.delete-list-btn:hover {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+}
+
+/* "+ Add list" button below all lists */
+.add-list-btn {
+  width: 100%;
+  max-width: 600px;
+  margin: 12px 0 80px;
+  padding: 10px;
+  background: none;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.add-list-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
 
 /* ── Date Edit Modal ──────────────────────────────────────────── */
 
