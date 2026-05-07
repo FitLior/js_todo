@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="styles3.css">
+  <title>Todo App</title>
+
+
+</head>
+<body>
+
+<header>
+  <h1>TODO</h1>
+  <p>Saved locally on your device</p>
+</header>
+
+<div class="input-area">
+  <div class="input-row">
+    <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" />
+    <button id="addBtn" aria-label="Add todo">+</button>
+  </div>
+  <div class="date-row">
+    <span>Start date</span>
+    <input type="date" id="startDateInput" />
+  </div>
+  <div class="date-row">
+    <span>End date</span>
+    <input type="date" id="endDateInput" />
+  </div>
+</div>
+
+<div class="footer-bar">
+  <span id="countLabel">0 tasks</span>
+  <button class="clear-btn" id="clearBtn">Clear completed</button>
+</div>
+
+<!-- Dynamic lists are injected here -->
+<div class="lists-container" id="listsContainer"></div>
+
+<button class="add-list-btn" id="addListBtn">+ Add list</button>
+
+<!-- ── Date Edit Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="dateModal">
+  <div class="modal">
+    <div class="modal-title">Edit dates</div>
+    <div class="modal-task-name" id="modalTaskName"></div>
+    <div class="modal-fields">
+      <div class="modal-field">
+        <label>Start date</label>
+        <input type="date" id="modalStartDate" />
+      </div>
+      <div class="modal-field">
+        <label>End date</label>
+        <input type="date" id="modalEndDate" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="modalCancelBtn">Cancel</button>
+      <button class="modal-save-btn"   id="modalSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Element refs ──────────────────────────────────────────────
+  const input          = document.getElementById('todoInput');
+  const startDateInput = document.getElementById('startDateInput');
+  const endDateInput   = document.getElementById('endDateInput');
+  const addBtn         = document.getElementById('addBtn');
+  const countLabel     = document.getElementById('countLabel');
+  const clearBtn       = document.getElementById('clearBtn');
+  const listsContainer = document.getElementById('listsContainer');
+  const addListBtn     = document.getElementById('addListBtn');
+
+  // Modal refs
+  const dateModal      = document.getElementById('dateModal');
+  const modalTaskName  = document.getElementById('modalTaskName');
+  const modalStartDate = document.getElementById('modalStartDate');
+  const modalEndDate   = document.getElementById('modalEndDate');
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalSaveBtn   = document.getElementById('modalSaveBtn');
+
+  // ── State ─────────────────────────────────────────────────────
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  let lists = [];
+  let listCount = 0;
+  let activeModalId = null; // tracks which todo is being edited
+
+  // ── Persistence ───────────────────────────────────────────────
+  function save() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────
+  function openDateModal(id) {
+    const t = todos.find(t => t.id === id);
+    if (!t) return;
+    activeModalId = id;
+    modalTaskName.textContent  = t.text;
+    modalStartDate.value = t.startDate || '';
+    modalEndDate.value   = t.endDate   || '';
+    dateModal.classList.add('open');
+  }
+
+  function closeDateModal() {
+    dateModal.classList.remove('open');
+    activeModalId = null;
+  }
+
+  function saveDateModal() {
+    if (activeModalId === null) return;
+    const t = todos.find(t => t.id === activeModalId);
+    if (t) {
+      t.startDate = modalStartDate.value || null;
+      t.endDate   = modalEndDate.value   || null;
+      save();
+      renderAll();
+    }
+    closeDateModal();
+  }
+
+  // Close modal when clicking the overlay background
+  dateModal.addEventListener('click', e => {
+    if (e.target === dateModal) closeDateModal();
+  });
+  modalCancelBtn.addEventListener('click', closeDateModal);
+  modalSaveBtn.addEventListener('click', saveDateModal);
+
+  // ── Date filter helpers ───────────────────────────────────────
+  function isThisWeek(startDateStr, endDateStr) {
+    if (!startDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffToSun = today.getDay();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - diffToSun);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const start = new Date(startDateStr + 'T00:00:00');
+    const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+    return start <= weekEnd && end >= weekStart;
+  }
+
+  function isNextWeek(startDateStr, endDateStr) {
+    if (!startDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setDate(today.getDate() - today.getDay());
+    const nextWeekStart = new Date(thisWeekStart);
+    nextWeekStart.setDate(thisWeekStart.getDate() + 7);
+    const nextWeekEnd = new Date(nextWeekStart);
+    nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+    const start = new Date(startDateStr + 'T00:00:00');
+    const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+    return start <= nextWeekEnd && end >= nextWeekStart;
+  }
+
+  function isThisMonth(startDateStr, endDateStr) {
+    if (!startDateStr) return false;
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd   = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const start = new Date(startDateStr + 'T00:00:00');
+    const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+    return start <= monthEnd && end >= monthStart;
+  }
+
+  // ── Filter logic ──────────────────────────────────────────────
+  function applyFilter(filterValue) {
+    return todos.filter(t => {
+      if (filterValue === 'active')    return !t.done;
+      if (filterValue === 'completed') return t.done;
+      if (filterValue === 'week')      return isThisWeek(t.startDate, t.endDate);
+      if (filterValue === 'nextweek')  return isNextWeek(t.startDate, t.endDate);
+      if (filterValue === 'month')     return isThisMonth(t.startDate, t.endDate);
+      return true;
+    });
+  }
+
+  // ── List creation ─────────────────────────────────────────────
+  function createList(filterValue = 'all') {
+    const index = listCount++;
+    lists.push({ index, filter: filterValue });
+
+    const section = document.createElement('div');
+    section.className = 'list-section';
+    section.dataset.listSection = index;
+
+    section.innerHTML = `
+      <div class="list-header">
+        <div class="list-header-left">
+          <span>List #${index}</span>
+          <select class="list-filter-select" onchange="changeListFilter(${index}, this.value)">
+            <option value="all"       ${filterValue === 'all'       ? 'selected' : ''}>All</option>
+            <option value="active"    ${filterValue === 'active'    ? 'selected' : ''}>Active</option>
+            <option value="completed" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+            <option value="week"      ${filterValue === 'week'      ? 'selected' : ''}>This Week</option>
+            <option value="nextweek"  ${filterValue === 'nextweek'  ? 'selected' : ''}>Next Week</option>
+            <option value="month"     ${filterValue === 'month'     ? 'selected' : ''}>This Month</option>
+          </select>
+        </div>
+        ${index > 0 ? `<button class="delete-list-btn" onclick="deleteList(${index})">✕ remove</button>` : ''}
+      </div>
+      <div class="list" data-list-index="${index}"></div>
+    `;
+
+    listsContainer.appendChild(section);
+    renderList(index);
+  }
+
+  function changeListFilter(index, newFilter) {
+    const entry = lists.find(l => l.index === index);
+    if (entry) entry.filter = newFilter;
+    renderList(index);
+  }
+
+  function deleteList(index) {
+    const section = document.querySelector(`[data-list-section="${index}"]`);
+    if (section) section.remove();
+    lists = lists.filter(l => l.index !== index);
+  }
+
+  // ── Render a single list ──────────────────────────────────────
+  function renderList(index) {
+    const listEl = document.querySelector(`[data-list-index="${index}"]`);
+    if (!listEl) return;
+    const entry = lists.find(l => l.index === index);
+    if (!entry) return;
+    const filtered = applyFilter(entry.filter);
+    listEl.innerHTML = filtered.length === 0
+      ? emptyMessage(entry.filter)
+      : filtered.map(todoHTML).join('');
+  }
+
+  // ── Render all lists ──────────────────────────────────────────
+  function renderAll() {
+    const active = todos.filter(t => !t.done).length;
+    countLabel.textContent = `${active} task${active !== 1 ? 's' : ''} left`;
+    lists.forEach(l => renderList(l.index));
+  }
+
+  // ── Task actions ──────────────────────────────────────────────
+  function addTodo() {
+    const text = input.value.trim();
+    if (!text) return;
+    const startDate = startDateInput.value || null;
+    const endDate   = endDateInput.value   || null;
+    todos.unshift({ id: Date.now(), text, startDate, endDate, done: false });
+    input.value = '';
+    startDateInput.value = '';
+    endDateInput.value   = '';
+    save();
+    renderAll();
+  }
+
+  function toggleTodo(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) t.done = !t.done;
+    save();
+    renderAll();
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    renderAll();
+  }
+
+  function clearCompleted() {
+    todos = todos.filter(t => !t.done);
+    save();
+    renderAll();
+  }
+
+  // ── HTML helpers ──────────────────────────────────────────────
+  function emptyMessage(filterValue) {
+    const messages = {
+      completed: 'No completed tasks',
+      active:    'Nothing to do!',
+      week:      'No tasks this week',
+      nextweek:  'No tasks next week',
+      month:     'No tasks this month'
+    };
+    return `<p class="empty">${messages[filterValue] || 'Add your first task'}</p>`;
+  }
+
+  function todoHTML(t) {
+    return `
+      <div class="todo-item ${t.done ? 'done' : ''}">
+        <button class="check-btn" onclick="toggleTodo(${t.id})" aria-label="Toggle">✓</button>
+        <div class="todo-body">
+          <span class="todo-text" onclick="openDateModal(${t.id})" title="Click to edit dates">${escapeHtml(t.text)}</span>
+          <div class="todo-dates-row">
+            ${t.startDate
+              ? `<span class="todo-date">📅 ${formatDate(t.startDate)}</span>`
+              : ''
+            }
+            ${t.endDate
+              ? `<span class="todo-date">⏳ ${formatDate(t.endDate)}</span>`
+              : ''
+            }
+            ${!t.startDate && !t.endDate
+              ? `<span class="no-date-hint" onclick="openDateModal(${t.id})">+ add dates</span>`
+              : ''
+            }
+          </div>
+        </div>
+        <button class="del-btn" onclick="deleteTodo(${t.id})" aria-label="Delete">✕</button>
+      </div>
+    `;
+  }
+
+  function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Event listeners ───────────────────────────────────────────
+  addBtn.addEventListener('click', addTodo);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+  clearBtn.addEventListener('click', clearCompleted);
+  addListBtn.addEventListener('click', () => createList('all'));
+
+  // ── Boot ──────────────────────────────────────────────────────
+  createList('all');
+
+  // ── Service worker ────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'todo-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+</script>
+</body>
+</html>

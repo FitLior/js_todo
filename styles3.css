@@ -1,0 +1,173 @@
+
+/* ── Date Edit Modal ──────────────────────────────────────────── */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 1.8rem 2rem;
+  width: min(420px, 92vw);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: modal-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+.modal-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.modal-task-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 1.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.modal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.modal-field input[type="date"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.88rem;
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: border-color 0.2s;
+  color-scheme: dark;
+}
+
+.modal-field input[type="date"]:focus {
+  border-color: var(--accent);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.8rem;
+}
+
+.modal-cancel-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.modal-cancel-btn:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.modal-save-btn {
+  background: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  color: #0f0f1a;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.modal-save-btn:active {
+  opacity: 0.8;
+  transform: scale(0.97);
+}
+
+/* Clickable task name */
+.todo-text {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.todo-text:hover {
+  color: var(--accent);
+}
+
+/* Compact date badges inside task row */
+.todo-dates-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.todo-dates-row .todo-date {
+  font-size: 0.67rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  cursor: default;
+}
+
+.todo-item.done .todo-dates-row .todo-date {
+  color: var(--muted);
+}
+
+.no-date-hint {
+  font-size: 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline dashed;
+  text-underline-offset: 2px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+
+.no-date-hint:hover {
+  color: var(--accent);
+}
