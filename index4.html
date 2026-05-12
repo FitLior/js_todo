@@ -198,9 +198,23 @@
             <option value="all"       ${filterValue === 'all'       ? 'selected' : ''}>All</option>
             <option value="active"    ${filterValue === 'active'    ? 'selected' : ''}>Active</option>
             <option value="completed" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
+            <option value="today" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
             <option value="week"      ${filterValue === 'week'      ? 'selected' : ''}>This Week</option>
             <option value="nextweek"  ${filterValue === 'nextweek'  ? 'selected' : ''}>Next Week</option>
             <option value="month"     ${filterValue === 'month'     ? 'selected' : ''}>This Month</option>
+
+            <option value="nextmonth" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
+            <option value="quater" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
+            <option value="nextquater" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
+            <option value="year" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+
+            <option value="nextyear" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+            
           </select>
         </div>
         ${index > 0 ? `<button class="delete-list-btn" onclick="deleteList(${index})">✕ remove</button>` : ''}
