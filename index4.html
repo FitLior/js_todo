@@ -7,8 +7,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="styles3.css">
   <title>Todo App</title>
-
-
 </head>
 <body>
 
@@ -34,7 +32,7 @@
 
 <div class="footer-bar">
   <span id="countLabel">0 tasks</span>
-  <button class="clear-btn" id="clearBtn">Clear completed</button>
+  <!-- <button class="clear-btn" id="clearBtn">Clear completed</button> -->
 </div>
 
 <!-- Dynamic lists are injected here -->
@@ -71,7 +69,6 @@
   const endDateInput   = document.getElementById('endDateInput');
   const addBtn         = document.getElementById('addBtn');
   const countLabel     = document.getElementById('countLabel');
-  const clearBtn       = document.getElementById('clearBtn');
   const listsContainer = document.getElementById('listsContainer');
   const addListBtn     = document.getElementById('addListBtn');
 
@@ -130,6 +127,19 @@
   modalSaveBtn.addEventListener('click', saveDateModal);
 
   // ── Date filter helpers ───────────────────────────────────────
+
+  
+  function isThisToday(startDateStr, endDateStr) {
+  if (!startDateStr) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(today);
+  todayEnd.setHours(23, 59, 59, 999);
+  const start = new Date(startDateStr + 'T00:00:00');
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+  return start <= todayEnd && end >= today;
+  }
+
   function isThisWeek(startDateStr, endDateStr) {
     if (!startDateStr) return false;
     const today = new Date();
@@ -169,14 +179,75 @@
     return start <= monthEnd && end >= monthStart;
   }
 
+  function isThisNextMonth(startDateStr, endDateStr) {
+    if (!startDateStr) return false;
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0); // last day of next month
+    const start = new Date(startDateStr + 'T00:00:00');
+    const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+    return start <= nextMonthEnd && end >= nextMonth;
+  }
+
+function isThisQuarter(startDateStr, endDateStr) {
+  if (!startDateStr) return false;
+  const today = new Date();
+  const quarter = Math.floor(today.getMonth() / 3); // 0-indexed quarter
+  const quarterStart = new Date(today.getFullYear(), quarter * 3, 1);
+  const quarterEnd = new Date(today.getFullYear(), quarter * 3 + 3, 0); // last day of quarter
+  const start = new Date(startDateStr + 'T00:00:00');
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+  return start <= quarterEnd && end >= quarterStart;
+}
+
+function isThisNextQuarter(startDateStr, endDateStr) {
+  if (!startDateStr) return false;
+  const today = new Date();
+  const quarter = Math.floor(today.getMonth() / 3);
+  const nextQuarter = (quarter + 1) % 4;
+  const nextQuarterYear = quarter === 3 ? today.getFullYear() + 1 : today.getFullYear();
+  const quarterStart = new Date(nextQuarterYear, nextQuarter * 3, 1);
+  const quarterEnd = new Date(nextQuarterYear, nextQuarter * 3 + 3, 0);
+  const start = new Date(startDateStr + 'T00:00:00');
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+  return start <= quarterEnd && end >= quarterStart;
+}
+
+
+  function isThisYear(startDateStr, endDateStr) {
+  if (!startDateStr) return false;
+  const year = new Date().getFullYear();
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+  const start = new Date(startDateStr + 'T00:00:00');
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+  return start <= yearEnd && end >= yearStart;
+  }
+
+function isThisNextYear(startDateStr, endDateStr) {
+  if (!startDateStr) return false;
+  const nextYear = new Date().getFullYear() + 1;
+  const yearStart = new Date(nextYear, 0, 1);
+  const yearEnd = new Date(nextYear, 11, 31);
+  const start = new Date(startDateStr + 'T00:00:00');
+  const end = endDateStr ? new Date(endDateStr + 'T00:00:00') : start;
+  return start <= yearEnd && end >= yearStart;
+}
+
   // ── Filter logic ──────────────────────────────────────────────
   function applyFilter(filterValue) {
     return todos.filter(t => {
-      if (filterValue === 'active')    return !t.done;
-      if (filterValue === 'completed') return t.done;
-      if (filterValue === 'week')      return isThisWeek(t.startDate, t.endDate);
-      if (filterValue === 'nextweek')  return isNextWeek(t.startDate, t.endDate);
-      if (filterValue === 'month')     return isThisMonth(t.startDate, t.endDate);
+      if (filterValue === 'active')     return !t.done;
+      if (filterValue === 'completed')  return t.done;
+      if (filterValue === 'today')      return isThisToday(t.startDate, t.endDate);
+      if (filterValue === 'week')       return isThisWeek(t.startDate, t.endDate);
+      if (filterValue === 'nextweek')   return isNextWeek(t.startDate, t.endDate);
+      if (filterValue === 'month')      return isThisMonth(t.startDate, t.endDate);
+      if (filterValue === 'nextmonth')  return isThisMonth(t.startDate, t.endDate);
+      if (filterValue === 'quarter')     return isThisQuarter(t.startDate, t.endDate);
+      if (filterValue === 'nextquarter') return isThisNextQuarter(t.startDate, t.endDate);
+      if (filterValue === 'year')       return isThisYear(t.startDate, t.endDate);
+      if (filterValue === 'nextyear')   return isThisNextYear(t.startDate, t.endDate);
       return true;
     });
   }
@@ -193,28 +264,19 @@
     section.innerHTML = `
       <div class="list-header">
         <div class="list-header-left">
-          <span>List #${index}</span>
           <select class="list-filter-select" onchange="changeListFilter(${index}, this.value)">
-            <option value="all"       ${filterValue === 'all'       ? 'selected' : ''}>All</option>
-            <option value="active"    ${filterValue === 'active'    ? 'selected' : ''}>Active</option>
-            <option value="completed" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="today" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="week"      ${filterValue === 'week'      ? 'selected' : ''}>This Week</option>
-            <option value="nextweek"  ${filterValue === 'nextweek'  ? 'selected' : ''}>Next Week</option>
-            <option value="month"     ${filterValue === 'month'     ? 'selected' : ''}>This Month</option>
-
-            <option value="nextmonth" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="quater" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="nextquater" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="year" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-
-            <option value="nextyear" ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
-            
+            <option value="all"         ${filterValue === 'all'       ? 'selected' : ''}>All</option>
+            <option value="active"      ${filterValue === 'active'    ? 'selected' : ''}>Active</option>
+            <option value="completed"   ${filterValue === 'completed' ? 'selected' : ''}>Completed</option>
+            <option value="today"       ${filterValue === 'today'     ? 'selected' : ''}>Today</option>
+            <option value="week"        ${filterValue === 'week'      ? 'selected' : ''}>This Week</option>
+            <option value="nextweek"    ${filterValue === 'nextweek'  ? 'selected' : ''}>Next Week</option>
+            <option value="month"       ${filterValue === 'month'     ? 'selected' : ''}>This Month</option>
+            <option value="nextmonth"   ${filterValue === 'nextmonth' ? 'selected' : ''}>Next Month</option>
+            <option value="quarter"      ${filterValue === 'quarter'    ? 'selected' : ''}>This quarter</option>
+            <option value="nextquarter"  ${filterValue === 'nextquarter' ? 'selected' : ''}>Next quarter</option>
+            <option value="year"        ${filterValue === 'year'      ? 'selected' : ''}>This Year</option>
+            <option value="nextyear"    ${filterValue === 'nextyear' ? 'selected' : ''}>Next Year</option>
           </select>
         </div>
         ${index > 0 ? `<button class="delete-list-btn" onclick="deleteList(${index})">✕ remove</button>` : ''}
@@ -255,6 +317,7 @@
     const active = todos.filter(t => !t.done).length;
     countLabel.textContent = `${active} task${active !== 1 ? 's' : ''} left`;
     lists.forEach(l => renderList(l.index));
+    
   }
 
   // ── Task actions ──────────────────────────────────────────────
@@ -340,7 +403,6 @@
   // ── Event listeners ───────────────────────────────────────────
   addBtn.addEventListener('click', addTodo);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
-  clearBtn.addEventListener('click', clearCompleted);
   addListBtn.addEventListener('click', () => createList('all'));
 
   // ── Boot ──────────────────────────────────────────────────────
