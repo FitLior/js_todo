@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GitHub Sync Example</title>
+  <style>
+    body { font-family: monospace; max-width: 400px; margin: 60px auto; padding: 0 20px; }
+    input { width: 100%; margin: 6px 0; padding: 8px; font-family: monospace; box-sizing: border-box; }
+    button { padding: 10px 20px; margin: 4px; font-family: monospace; cursor: pointer; }
+    #status { margin-top: 20px; color: gray; font-size: 0.85rem; }
+    #counter { font-size: 3rem; text-align: center; margin: 30px 0; }
+    .section { border: 1px solid #ccc; padding: 16px; margin-bottom: 20px; }
+    label { font-size: 0.8rem; color: #555; }
+  </style>
+</head>
+<body>
+
+  <!-- Step 1: Configuration -->
+  <div class="section">
+    <h3>GitHub Config</h3>
+
+    <label>Personal Access Token (repo scope)</label>
+    <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" />
+
+    <label>Username</label>
+    <input type="text" id="username" placeholder="your-github-username" />
+
+    <label>Repo name (must be private)</label>
+    <input type="text" id="repo" placeholder="my-data" />
+
+    <label>File name</label>
+    <input type="text" id="filepath" value="data.json" />
+
+    <button onclick="connect()">Connect</button>
+  </div>
+
+  <!-- Step 2: The actual app -->
+  <div class="section">
+    <h3>Counter (synced to GitHub)</h3>
+    <div id="counter">–</div>
+    <div style="text-align:center">
+      <button onclick="change(-1)">− minus</button>
+      <button onclick="change(+1)">+ plus</button>
+    </div>
+  </div>
+
+  <div id="status">Not connected.</div>
+
+<script>
+  // ── The data we want to sync ──────────────────────────────────
+  // Just a plain object. You can put anything in here.
+  let data = { count: 0 };
+
+  // This holds the file's SHA — GitHub needs it to overwrite a file.
+  let sha = null;
+
+  // ── Helpers to build the GitHub API URL and headers ───────────
+  function url() {
+    const u = id('username').value.trim();
+    const r = id('repo').value.trim();
+    const f = id('filepath').value.trim();
+    return `https://api.github.com/repos/${u}/${r}/contents/${f}`;
+  }
+
+  function headers() {
+    return {
+      'Authorization': `token ${id('token').value.trim()}`,
+      'Accept':        'application/vnd.github+json',
+      'Content-Type':  'application/json'
+    };
+  }
+
+  // ── LOAD: read the file from GitHub ──────────────────────────
+  async function connect() {
+    status('Loading…');
+    try {
+      const res = await fetch(url(), { headers: headers() });
+
+      if (res.status === 404) {
+        // File doesn't exist yet — that's fine, we'll create it on first save
+        sha  = null;
+        data = { count: 0 };
+        render();
+        status('Connected. File does not exist yet — it will be created on first save.');
+        return;
+      }
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const file = await res.json();
+
+      // GitHub returns the file content as Base64 — decode it
+      sha  = file.sha;
+      data = JSON.parse(atob(file.content.replace(/\n/g, '')));
+
+      render();
+      status('Loaded from GitHub. SHA: ' + sha);
+
+    } catch (e) {
+      status('Error: ' + e.message);
+    }
+  }
+
+  // ── SAVE: write the file back to GitHub ───────────────────────
+  async function save() {
+    status('Saving…');
+    try {
+      // Encode our data object as Base64 (GitHub requires this)
+      const content = btoa(JSON.stringify(data, null, 2));
+
+      const body = {
+        message: 'update data',   // this becomes the git commit message
+        content: content,
+        ...(sha ? { sha } : {})   // if file exists, include SHA; if new, omit it
+      };
+
+      const res = await fetch(url(), {
+        method:  'PUT',
+        headers: headers(),
+        body:    JSON.stringify(body)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const result = await res.json();
+      sha = result.content.sha;   // update SHA for next save
+
+      status('Saved! New SHA: ' + sha);
+
+    } catch (e) {
+      status('Save error: ' + e.message);
+    }
+  }
+
+  // ── App logic ─────────────────────────────────────────────────
+  function change(amount) {
+    data.count += amount;
+    render();
+    save();
+  }
+
+  function render() {
+    id('counter').textContent = data.count;
+  }
+
+  // ── Utilities ─────────────────────────────────────────────────
+  function id(x)  { return document.getElementById(x); }
+  function status(msg) { id('status').textContent = msg; }
+</script>
+</body>
+</html>
