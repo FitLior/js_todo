@@ -40,6 +40,35 @@
 
 <button class="add-list-btn" id="addListBtn">+ Add list</button>
 
+<!-- ── Github credentials Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="githubModal">
+  <div class="modal">
+    <div class="modal-title">Github Credentials</div>
+    <div class="modal-fields">
+      <div class="modal-field">
+        <label>Personal Access Token (repo scope)</label>
+        <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" />
+      </div>  
+      <div class="modal-field">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="your-github-username" />
+      </div>
+      <div class="modal-field">
+        <label>Repo name (must be private)</label>
+        <input type="text" id="repo" placeholder="my-data" />
+      </div>
+      <div class="modal-field">
+        <label>File name</label>
+        <input type="text" id="filepath" value="todo.json" />
+      </div>
+    </div>
+    <div class="modal-actions">
+    <button onclick="connect()">Connect</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ── Date Edit Modal ─────────────────────────────────────────── -->
 <div class="modal-overlay" id="dateModal">
   <div class="modal">
@@ -63,6 +92,49 @@
 </div>
 
 <script>
+  // This holds the file's SHA — GitHub needs it to overwrite a file.
+  let sha = null;
+
+  function headers() {
+    return {
+      'Authorization': `token ${id('token').value.trim()}`,
+      'Accept':        'application/vnd.github+json',
+      'Content-Type':  'application/json'
+    };
+  }
+
+  // Data Connection
+  async function connect() {
+    //status('Loading…');
+    try {
+      const res = await fetch(url(), { headers: headers() });
+
+      if (res.status === 404) {
+        // File doesn't exist yet — that's fine, we'll create it on first save
+        sha  = null;
+        data = [];
+        //render();
+        alert('Connected. File does not exist yet — it will be created on first save.');
+        return;
+      }
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const file = await res.json();
+
+      // GitHub returns the file content as Base64 — decode it
+      sha  = file.sha;
+      data = JSON.parse(atob(file.content.replace(/\n/g, '')));
+
+      //render();
+      status('Loaded from GitHub. SHA: ' + sha);
+
+    } catch (e) {
+      status('Error: ' + e.message);
+    }
+  }
+
+
   // ── Element refs ──────────────────────────────────────────────
   const input          = document.getElementById('todoInput');
   const startDateInput = document.getElementById('startDateInput');
