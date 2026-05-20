@@ -12,7 +12,6 @@
 
 <header>
   <h1>TODO</h1>
-  <p>Saved locally on your device</p>
 </header>
 
 <div class="input-area">
@@ -151,6 +150,8 @@
   const modalEndDate   = document.getElementById('modalEndDate');
   const modalCancelBtn = document.getElementById('modalCancelBtn');
   const modalSaveBtn   = document.getElementById('modalSaveBtn');
+
+  //
 
   // ── State ─────────────────────────────────────────────────────
   let todos = JSON.parse(localStorage.getItem('todos') || '[]');

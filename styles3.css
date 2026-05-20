@@ -521,6 +521,14 @@ header p {
   border-color: var(--accent);
 }
 
+.modal-field input[type="text"]:focus {
+  border-color: var(--accent);
+}
+
+.modal-field input[type="password"]:focus {
+  border-color: var(--accent);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
